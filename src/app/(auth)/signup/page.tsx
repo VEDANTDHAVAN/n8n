@@ -1,12 +1,10 @@
 import { SignUpForm } from "@/features/auth/components/signup-form"
-import { requireAuth } from "@/lib/auth-utils";
+import { requireUnAuth } from "@/lib/auth-utils";
 
 const Page = async () => {
-  await requireAuth();  
+  await requireUnAuth();  
   return (
-    <div>
-      <SignUpForm />  
-    </div>
+    <SignUpForm />  
   )
 }
 
