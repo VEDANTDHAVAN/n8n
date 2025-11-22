@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "inngest:dev": "inngest-cli dev",
+    "dev:all": "mprocs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -50,6 +52,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "embla-carousel-react": "^8.6.0",
+    "inngest": "^3.46.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.548.0",
     "next": "16.0.1",
@@ -73,6 +76,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "inngest-cli": "^1.14.0",
     "prisma": "^6.18.0",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.20.6",
