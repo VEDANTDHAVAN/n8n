@@ -1,3 +1,5 @@
+"use client";
+
 import { SidebarTrigger } from "./ui/sidebar"
 
 export const AppHeader = () => {
