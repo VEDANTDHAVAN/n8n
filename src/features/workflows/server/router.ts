@@ -5,9 +5,26 @@ import z from "zod";
 import type { Node, Edge } from "@xyflow/react";
 import { PAGINATION } from "@/config/constants";
 import { NodeType } from "@/generated/prisma/enums";
+import { inngest } from "@/inngest/client";
 
 export const workflowsRouter = createTRPCRouter({
-    create: protectedProcedure.mutation(({ ctx }) => {
+  execute: protectedProcedure.input(z.object({ id: z.string() }))
+   .mutation(async ({ input, ctx }) => {
+     const workflow = await prisma.workflow.findUniqueOrThrow({
+      where: {
+        id: input.id,
+        userId: ctx.auth.user.id,
+      },
+     });
+     
+     await inngest.send({
+      name: "workflows/execute.workflow",
+      data: { workflowId: input.id },
+      });
+
+     return workflow;
+   }),  
+  create: protectedProcedure.mutation(({ ctx }) => {
         return prisma.workflow.create({
             data: {
                 name: generateSlug(3),
@@ -22,7 +39,7 @@ export const workflowsRouter = createTRPCRouter({
             },
         });
     }),
-    remove: protectedProcedure
+  remove: protectedProcedure
      .input(z.object({ id: z.string() }))
      .mutation(({ ctx, input }) => {
       return prisma.workflow.delete({
@@ -32,7 +49,7 @@ export const workflowsRouter = createTRPCRouter({
         },
       });
     }),
-    update: protectedProcedure
+  update: protectedProcedure
      .input(z.object({ id: z.string(), nodes: z.array(
       z.object({ id: z.string(), type: z.string().nullish(),
         position: z.object({ x: z.number(), y: z.number(), }),
@@ -88,7 +105,7 @@ export const workflowsRouter = createTRPCRouter({
         return workflow;
        })
     }),
-    updateName: protectedProcedure
+  updateName: protectedProcedure
      .input(z.object({ id: z.string(), name: z.string().min(1) }))
      .mutation(({ ctx, input }) => {
         return prisma.workflow.update({
@@ -96,7 +113,7 @@ export const workflowsRouter = createTRPCRouter({
             data: { name: input.name },
         });
     }),
-    getOne: protectedProcedure
+  getOne: protectedProcedure
      .input(z.object({ id: z.string() }))
      .query(async ({ ctx, input }) => {
         const workflow = await prisma.workflow.findUniqueOrThrow({
@@ -119,7 +136,7 @@ export const workflowsRouter = createTRPCRouter({
         id: workflow.id, name: workflow.name, nodes, edges,
        }
     }),
-    getMany: protectedProcedure
+  getMany: protectedProcedure
      .input(z.object({
         page: z.number().default(PAGINATION.DEFAULT_PAGE),
         pageSize: z.number().min(PAGINATION.MIN_PAGE_SIZE)
@@ -161,5 +178,5 @@ export const workflowsRouter = createTRPCRouter({
             items: items, totalCount, totalPages,
             page, pageSize, hasNextPage, hasPreviousPage,
         }
-    }),  
+  }),  
 });
