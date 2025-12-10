@@ -12,9 +12,9 @@ HandleBars.registerHelper("json", (context) => {
 });
 
 type HttpRequestData = {
-  variableName: string,
-  endpoint: string,
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+  variableName?: string,
+  endpoint?: string,
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   body?: string,
 };
 
@@ -25,35 +25,35 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
     nodeId, status: "loading",
   }));
 
-  if(!data.endpoint) {
-    await publish(httpRequestChannel().status({
-     nodeId, status: "error",
-    }));
-    throw new NonRetriableError("HTTP Request node: No endpoint configured");
-  }
-
-  if(!data.variableName) {
-    await publish(httpRequestChannel().status({
-     nodeId, status: "error",
-    }));
-    throw new NonRetriableError("HTTP Request node: VariableName not configured");
-  }
-
-  if(!data.method) {
-    await publish(httpRequestChannel().status({
-     nodeId, status: "error",
-    }));
-    throw new NonRetriableError("HTTP Request node: Method not configured");
-  }
-
   try {
     const result = await step.run("http-request", async() => {
-    const method = data.method;
-    const endpoint = HandleBars.compile(data.endpoint)(context);
-    //console.log("ENDPOINT", {endpoint});
-    const options: KyOptions = { method };
+     if(!data.endpoint) {
+      await publish(httpRequestChannel().status({
+      nodeId, status: "error",
+     }));
+     throw new NonRetriableError("HTTP Request node: No endpoint configured");
+     }
 
-    if(["POST", "PUT", "PATCH"].includes(method)) {
+     if(!data.variableName) {
+      await publish(httpRequestChannel().status({
+      nodeId, status: "error",
+     }));
+     throw new NonRetriableError("HTTP Request node: VariableName not configured");
+     }
+
+     if(!data.method) {
+      await publish(httpRequestChannel().status({
+      nodeId, status: "error",
+     }));
+     throw new NonRetriableError("HTTP Request node: Method not configured");
+     }
+
+     const method = data.method;
+     const endpoint = HandleBars.compile(data.endpoint)(context);
+     //console.log("ENDPOINT", {endpoint});
+     const options: KyOptions = { method };
+
+     if(["POST", "PUT", "PATCH"].includes(method)) {
       const resolved = HandleBars.compile(data.body || '{}')(context);
       //console.log("BODY:", resolved);
       //JSON.parse(resolved);
@@ -61,21 +61,21 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
       options.headers = {
         "Content-Type": "application/json",        
       };
-    }
+     }
 
-    const response = await ky(endpoint, options);
-    const contentType = response.headers.get("content-type");
+     const response = await ky(endpoint, options);
+     const contentType = response.headers.get("content-type");
 
-    const responseData = contentType?.includes("application/json")
+     const responseData = contentType?.includes("application/json")
      ? await response.json() : await response.text();
 
-    const responsePayload = {
+     const responsePayload = {
       httpResponse: {
         status: response.status,
         statusText: response.statusText,
         data: responseData,
       },
-    };
+     };
 
      return {
       ...context, [data.variableName]: responsePayload,
