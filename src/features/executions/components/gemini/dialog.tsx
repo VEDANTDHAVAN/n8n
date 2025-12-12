@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogDescription,
     DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, 
-  FormItem, FormLabel, } from "@/components/ui/form";
+  FormItem, FormLabel,
+  FormMessage, } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import z from "zod";
@@ -13,12 +14,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Image from "next/image";
+import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+import { CredentialType } from "@/generated/prisma/enums";
 
 const formSchema = z.object({
   variableName: z.string()
    .min(1, { message: "Variable name is required!!" }).regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, { 
      message: "Variable name must start with a letter or underscore and contain only letters, numbers, and underscores",
     }),
+  credentialId: z.string().min(1, "Credential is required"),  
   systemPrompt: z.string().optional(),
   userPrompt: z.string().min(1, "User prompt is required"),
 });
@@ -35,10 +41,16 @@ interface Props {
 export const GeminiDialog = ({
  open, onOpenChange, onSubmit, defaultValues = {},
 }: Props) => {
+ const { 
+   data: credentials, 
+   isLoading: isLoadingCredentials 
+ } = useCredentialsByType(CredentialType.GEMINI);
+
  const form = useForm<z.infer<typeof formSchema>>({
   resolver: zodResolver(formSchema),
   defaultValues: {
     variableName: defaultValues.variableName || "",
+    credentialId: defaultValues.credentialId || "",
     systemPrompt:   defaultValues.systemPrompt || "",
     userPrompt:   defaultValues.userPrompt || "",
   },
@@ -49,6 +61,7 @@ export const GeminiDialog = ({
   if(open) {
     form.reset({
       variableName: defaultValues.variableName || "",
+      credentialId: defaultValues.credentialId || "",
       systemPrompt:   defaultValues.systemPrompt || "",
       userPrompt:   defaultValues.userPrompt || "",
     });
@@ -87,8 +100,31 @@ export const GeminiDialog = ({
             {`{{${watchVariableName}.text}}`}
            </FormDescription>
           </FormItem>
-        )}
-       /> 
+        )} /> 
+       <FormField control={form.control} name="credentialId" render={({ field }) => (
+        <FormItem>
+          <FormLabel>Gemini Credential</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value} 
+              disabled={isLoadingCredentials || !credentials?.length}> 
+             <FormControl>
+              <SelectTrigger className="w-full">
+               <SelectValue placeholder="Select a Credential" />
+              </SelectTrigger> 
+             </FormControl>
+             <SelectContent>
+               {credentials?.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  <div className="flex items-center gap-2">
+                   <Image src="/logos/gemini.svg" alt="Gemini" width={16} height={16} />
+                   {option.name}
+                  </div>
+                </SelectItem>
+               ))} 
+              </SelectContent>
+            </Select>
+            <FormMessage />
+        </FormItem>
+        )} />
        <FormField control={form.control} name="systemPrompt" render={({field}) => (
           <FormItem>
            <FormLabel>System Prompt (optional)</FormLabel> 

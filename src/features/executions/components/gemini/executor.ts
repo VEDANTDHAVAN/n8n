@@ -4,6 +4,7 @@ import { NonRetriableError } from "inngest";
 import { generateText } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { geminiChannel } from "@/inngest/channels/gemini";
+import prisma from "@/lib/db";
 
 HandleBars.registerHelper("json", (context) => {
   const jsonString = JSON.stringify(context, null, 2);
@@ -14,6 +15,7 @@ HandleBars.registerHelper("json", (context) => {
 
 type GeminiData = {
   variableName?: string,
+  credentialId?: string;
   systemPrompt?: string,
   userPrompt?: string,
 };
@@ -32,26 +34,40 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
     throw new NonRetriableError("Gemini node: Variable name is Missing!!");
   }
 
+  if(!data.credentialId) {
+    await publish(geminiChannel().status({
+      nodeId, status: "error",
+    }));
+    throw new NonRetriableError("Gemini node: Credential is Missing!!"); 
+  }
+
   if(!data.userPrompt) {
     await publish(geminiChannel().status({
       nodeId, status: "error",
     }));
     throw new NonRetriableError("Gemini node: User Prompt is Missing!!");
   }
-
-  // TODO: credential is missing
-  
+ 
   const systemPrompt = data.systemPrompt 
    ? HandleBars.compile(data.systemPrompt)(context)
    : "You are a Helpful Assistant.";
 
   const userPrompt = HandleBars.compile(data.userPrompt)(context);
 
-  // TODO: Fetch credential that user selected
-  const credentialValue = process.env.GOOGLE_GENERATIVE_AI_API_KEY!;
+  const credential = await step.run("get-credential", () => {
+    return prisma.credential.findUnique({
+      where: {
+        id: data.credentialId,
+      },
+    });
+  });
+
+  if(!credential) {
+    throw new NonRetriableError("Gemini node: Credential not found!!")
+  }
 
   const google = createGoogleGenerativeAI({
-    apiKey: credentialValue,
+    apiKey: credential.value,
   });
 
   try {
@@ -67,7 +83,7 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
       },
     );
 
-    const text = steps[0].content[0].type === "text" ?
+    const text = steps[0]?.content[0]?.type === "text" ?
      steps[0].content[0].text : "";
     
     await publish(geminiChannel().status({

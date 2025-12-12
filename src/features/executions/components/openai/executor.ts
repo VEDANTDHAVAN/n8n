@@ -4,6 +4,7 @@ import { NonRetriableError } from "inngest";
 import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { openAIChannel } from "@/inngest/channels/openai";
+import prisma from "@/lib/db";
 
 
 HandleBars.registerHelper("json", (context) => {
@@ -15,6 +16,7 @@ HandleBars.registerHelper("json", (context) => {
 
 type OpenAIData = {
   variableName?: string,
+  credentialId?: string,
   systemPrompt?: string,
   userPrompt?: string,
 };
@@ -33,14 +35,19 @@ export const openAIExecutor: NodeExecutor<OpenAIData> = async ({
     throw new NonRetriableError("OpenAI node: Variable name is Missing!!");
   }
 
+  if(!data.credentialId) {
+   await publish(openAIChannel().status({
+      nodeId, status: "error",
+    }));
+    throw new NonRetriableError("OpenAI node: Credential is Missing!!"); 
+  }
+
   if(!data.userPrompt) {
     await publish(openAIChannel().status({
       nodeId, status: "error",
     }));
     throw new NonRetriableError("OpenAI node: User Prompt is Missing!!");
   }
-
-  // TODO: credential is missing
   
   const systemPrompt = data.systemPrompt 
    ? HandleBars.compile(data.systemPrompt)(context)
@@ -48,11 +55,20 @@ export const openAIExecutor: NodeExecutor<OpenAIData> = async ({
 
   const userPrompt = HandleBars.compile(data.userPrompt)(context);
 
-  // TODO: Fetch credential that user selected
-  const credentialValue = process.env.OPENAI_API_KEY!;
+  const credential = await step.run("get-credential", () => {
+    return prisma.credential.findUnique({
+      where: {
+        id: data.credentialId,
+      },
+    });
+  });
+
+  if(!credential) {
+    throw new NonRetriableError("OpenAI node: Credential not found!!")
+  }
 
   const openai = createOpenAI({
-    apiKey: credentialValue,
+    apiKey: credential.value,
   });
 
   try {
@@ -68,7 +84,7 @@ export const openAIExecutor: NodeExecutor<OpenAIData> = async ({
       },
     );
 
-    const text = steps[0].content[0].type === "text" ?
+    const text = steps[0]?.content[0]?.type === "text" ?
      steps[0].content[0].text : "";
     
     await publish(openAIChannel().status({

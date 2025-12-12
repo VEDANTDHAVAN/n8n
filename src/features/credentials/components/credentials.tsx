@@ -1,12 +1,12 @@
 "use client";
 import { formatDistanceToNow } from "date-fns";
 import { EmptyView, EntityContainer, EntityHeader, EntityItem, EntityList, EntityPagination, EntitySearch, ErrorView, LoadingView } from "@/components/entity-components";
-import { useRemoveCredential, useSuspenseCredentials } from "../hooks/use-credentials"
+import { useRemoveCredential, useSuspenseCredentials } from "../hooks/use-credentials";
 import { useRouter } from "next/navigation";
 import { useCredentialsParams } from "../hooks/use-credentials-params";
 import { UseEntitySearch } from "@/hooks/use-entity-search";
+import { CredentialType } from "@/generated/prisma/enums";
 import type { Credential } from "@/generated/prisma/client";
-import { CredentialType } from "@/generated/prisma/client";
 import Image from "next/image";
 
 export const CredentialsSearch = () => {
@@ -32,13 +32,10 @@ export const CredentialsList = () => {
 }
 
 export const CredentialsHeader = ({ disabled }: { disabled?: boolean }) => {
-
     return (
-        <>
-         <EntityHeader title="Credentials" description="Create and manage your Credentials" 
-          newButtonLabel="New Credential" newButtonHref="/credentials/new" disabled={disabled}
-         />
-        </>
+        <EntityHeader title="Credentials" description="Create and manage your credentials" 
+           newButtonLabel="New Credential" disabled={disabled} newButtonHref="/credentials/new"
+        />
     );
 };
 
@@ -72,15 +69,15 @@ export const CredentialsError = () => {
     return <ErrorView message="Error Loading Credentials..." />
 }
 
-export const CredentialsEmpty = () => {   
+export const CredentialsEmpty = () => {
  const router = useRouter(); 
  const handleCreate = () => {
-    router.push("/credentials/new");
+  router.push("/credentials/new");
  }
 
  return (
-     <EmptyView  onNew={handleCreate}
-      message="You haven't created any credentials yet!! Get started by creating your first credential" />
+    <EmptyView onNew={handleCreate}
+     message="You haven't created any credentials yet!! Get started by creating your first credential" />
  )
 };
 
@@ -91,7 +88,7 @@ const credentialLogos: Record<CredentialType, string> = {
 }
 
 export const CredentialItem = ({
-    data,
+    data, 
 }: {data: Credential}) => {
  const removeCredential = useRemoveCredential();
  const handleRemove = () => {
@@ -102,9 +99,9 @@ export const CredentialItem = ({
 
  return (
     <EntityItem href={`/credentials/${data.id}`} title={data.name}
-     subtitle={<>Updated {formatDistanceToNow(data.createdAt, {addSuffix: true})}{" "} &bull; Created{" "} {formatDistanceToNow(data.updatedAt, {addSuffix: true})}</>}
+     subtitle={<>Updated {formatDistanceToNow(data.updatedAt, {addSuffix: true})}{" "} &bull; Created{" "} {formatDistanceToNow(data.createdAt, {addSuffix: true})}</>}
      image={<div className="size-8 flex items-center justify-center">
-      <Image src={logo} alt={data.type} width={20} height={20} />
+      <Image src={logo} alt={data.type} width={16} height={16} />
      </div>} onRemove={handleRemove} isRemoving={removeCredential.isPending}
     />
  )
