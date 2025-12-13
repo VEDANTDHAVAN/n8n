@@ -4,12 +4,12 @@ import { createTRPCRouter, premiumProcedure, protectedProcedure } from "@/trpc/i
 import z from "zod";
 import type { Node, Edge } from "@xyflow/react";
 import { PAGINATION } from "@/config/constants";
-import { NodeType } from "@/generated/prisma/enums";
-import { inngest } from "@/inngest/client";
+import { NodeType } from "@/lib/types";
 import { sendWorkflowExecution } from "@/inngest/utils";
+import { mapWorkflowToSummaryDTO } from "../lib/workflow.mapper";
 
 export const workflowsRouter = createTRPCRouter({
-  execute: protectedProcedure.input(z.object({ id: z.string() }))
+  execute: premiumProcedure.input(z.object({ id: z.string() }))
    .mutation(async ({ input, ctx }) => {
      const workflow = await prisma.workflow.findUniqueOrThrow({
       where: {
@@ -24,8 +24,8 @@ export const workflowsRouter = createTRPCRouter({
       
      return workflow;
    }),  
-  create: protectedProcedure.mutation(({ ctx }) => {
-        return prisma.workflow.create({
+  create: protectedProcedure.mutation(async ({ ctx }) => {
+      const workflow = await prisma.workflow.create({
             data: {
                 name: generateSlug(3),
                 userId: ctx.auth.user.id,
@@ -38,16 +38,18 @@ export const workflowsRouter = createTRPCRouter({
                 },
             },
         });
+      return mapWorkflowToSummaryDTO(workflow);  
     }),
   remove: protectedProcedure
      .input(z.object({ id: z.string() }))
-     .mutation(({ ctx, input }) => {
-      return prisma.workflow.delete({
+     .mutation(async ({ ctx, input }) => {
+      const workflow = await prisma.workflow.delete({
         where: {
             id: input.id,
             userId: ctx.auth.user.id,
         },
       });
+      return mapWorkflowToSummaryDTO(workflow);
     }),
   update: protectedProcedure
      .input(z.object({ id: z.string(), nodes: z.array(
@@ -102,7 +104,7 @@ export const workflowsRouter = createTRPCRouter({
           data: { updatedAt: new Date() },
         });
 
-        return workflow;
+        return mapWorkflowToSummaryDTO(workflow);
        })
     }),
   updateName: protectedProcedure
@@ -175,7 +177,7 @@ export const workflowsRouter = createTRPCRouter({
         const hasPreviousPage = page > 1;
 
         return {
-            items: items, totalCount, totalPages,
+            items: items.map(mapWorkflowToSummaryDTO), totalCount, totalPages,
             page, pageSize, hasNextPage, hasPreviousPage,
         }
   }),  

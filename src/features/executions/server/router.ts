@@ -2,13 +2,13 @@ import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
-import { CredentialType } from "@/generated/prisma/enums";
+import { mapExecutionToDTO } from "../lib/execution.mapper";
 
 export const executionsRouter = createTRPCRouter({
   getOne: protectedProcedure
      .input(z.object({ id: z.string() }))
-     .query(({ ctx, input }) => {
-        return prisma.execution.findUniqueOrThrow({
+     .query(async ({ ctx, input }) => {
+        const execution = await prisma.execution.findUniqueOrThrow({
           where: { id: input.id, workflow: {
             userId: ctx.auth.user.id,
           } },
@@ -18,6 +18,7 @@ export const executionsRouter = createTRPCRouter({
            }, 
           }
         });
+      return mapExecutionToDTO(execution);  
     }),
   getMany: protectedProcedure
      .input(z.object({
@@ -61,7 +62,7 @@ export const executionsRouter = createTRPCRouter({
         const hasPreviousPage = page > 1;
 
         return {
-            items: items, totalCount, totalPages,
+            items: items.map(mapExecutionToDTO), totalCount, totalPages,
             page, pageSize, hasNextPage, hasPreviousPage,
         }
   }),  

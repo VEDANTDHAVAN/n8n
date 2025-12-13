@@ -1,6 +1,6 @@
 "use client";
 
-import { CredentialType } from "@/generated/prisma/enums";
+import { CredentialType } from "@/lib/types";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useCreateCredential, useUpdateCredential,
@@ -22,6 +22,7 @@ import { Card, CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { mapCredentialToDTO } from "@/features/credentials/lib/credential.mapper";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -168,6 +169,7 @@ export const CredentialForm = ({
 
 export const CredentialView = ({ credentialId, }: { credentialId: string }) => {
   const { data: credential } = useSuspenseCredential(credentialId);
+  const initialData = mapCredentialToDTO(credential);
 
-  return <CredentialForm initialData={credential} />
+  return <CredentialForm initialData={initialData} />
 }

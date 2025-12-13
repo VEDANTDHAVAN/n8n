@@ -2,7 +2,7 @@ import { NonRetriableError, step } from "inngest";
 import { inngest } from "./client";
 import prisma from "@/lib/db";
 import { topologicalSort } from "./utils";
-import { ExecutionStatus, NodeType } from "@/generated/prisma/enums";
+import { ExecutionStatus, NodeType } from "@/lib/types";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
 import { httpRequestChannel } from "./channels/http-request";
 import { manualTriggerChannel } from "./channels/manual-trigger";
@@ -12,6 +12,8 @@ import { geminiChannel } from "./channels/gemini";
 import { openAIChannel } from "./channels/openai";
 import { anthropicChannel } from "./channels/anthropic";
 import { discordChannel } from "./channels/discord";
+import { mapNodeToDTO } from "@/lib/node.mapper";
+import { mapConnectionToDTO } from "@/lib/connection.mapper";
 
 export const executeWorkflow = inngest.createFunction(
   { id: "execute-workflow", retries: process.env.NODE_ENV === "production" ? 3 : 0,
@@ -60,7 +62,7 @@ export const executeWorkflow = inngest.createFunction(
       include: { nodes: true, connections: true },
      });
 
-     return topologicalSort(workflow.nodes, workflow.connections);
+     return topologicalSort(workflow.nodes.map(mapNodeToDTO), workflow.connections.map(mapConnectionToDTO));
    });
    
    const userId = await step.run("find-user-id", async () => {

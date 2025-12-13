@@ -1,8 +1,8 @@
 "use client";
 import { formatDistanceToNow } from "date-fns";
 import { EmptyView, EntityContainer, EntityHeader, EntityItem, EntityList, EntityPagination, EntitySearch, ErrorView, LoadingView } from "@/components/entity-components";
-import { ExecutionStatus } from "@/generated/prisma/enums";
-import type { Execution } from "@/generated/prisma/client";
+import { ExecutionStatus } from "@/lib/types";
+import type { ExecutionDTO } from "@/lib/types";
 import { useSuspenseExecutions } from "../hooks/use-executions";
 import { useExecutionsParams } from "../hooks/use-executions-params";
 import { CheckCircle2Icon, ClockIcon, Loader2Icon, XCircleIcon } from "lucide-react";
@@ -81,7 +81,7 @@ const formatStatus = (status: ExecutionStatus) => {
 
 export const ExecutionItem = ({
     data, 
-}: {data: Execution & {
+}: {data: ExecutionDTO & {
     workflow: { id: string, name: string, },
 };}) => {
   const duration = data.completedAt ? 

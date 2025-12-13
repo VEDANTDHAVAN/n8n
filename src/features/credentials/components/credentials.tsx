@@ -5,9 +5,10 @@ import { useRemoveCredential, useSuspenseCredentials } from "../hooks/use-creden
 import { useRouter } from "next/navigation";
 import { useCredentialsParams } from "../hooks/use-credentials-params";
 import { UseEntitySearch } from "@/hooks/use-entity-search";
-import { CredentialType } from "@/generated/prisma/enums";
-import type { Credential } from "@/generated/prisma/client";
+import { CredentialType } from "@/lib/types";
+import type { CredentialDTO } from "@/lib/types"; 
 import Image from "next/image";
+import { mapCredentialToDTO } from "@/features/credentials/lib/credential.mapper";
 
 export const CredentialsSearch = () => {
     const [params, setParams] = useCredentialsParams();
@@ -26,7 +27,7 @@ export const CredentialsList = () => {
     return (
         <EntityList items={credentials.data.items}
         getKey={(credential) => credential.id} 
-        renderItem={(credential) => <CredentialItem data={credential} />} 
+        renderItem={(credential) => <CredentialItem data={mapCredentialToDTO(credential)} />} 
         emptyView={<CredentialsEmpty />} />
     )
 }
@@ -89,7 +90,7 @@ const credentialLogos: Record<CredentialType, string> = {
 
 export const CredentialItem = ({
     data, 
-}: {data: Credential}) => {
+}: {data: CredentialDTO }) => {
  const removeCredential = useRemoveCredential();
  const handleRemove = () => {
     removeCredential.mutate({ id: data.id });

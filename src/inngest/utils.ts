@@ -1,12 +1,12 @@
-import { Connection, Node } from "@/generated/prisma/client";
+import { ConnectionDTO, NodeDTO } from "@/lib/types";
 import toposort from "toposort";
 import { inngest } from "./client";
 import { createId } from "@paralleldrive/cuid2";
 
 export const topologicalSort = (
-    nodes: Node[],
-    connections: Connection[],
-): Node[] => {
+    nodes: NodeDTO[],
+    connections: ConnectionDTO[],
+): NodeDTO[] => {
     // If no connections, return node as-is (all are independent)
     if(connections.length === 0){
         return nodes;

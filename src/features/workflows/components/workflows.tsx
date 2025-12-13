@@ -6,7 +6,7 @@ import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
 import { useRouter } from "next/navigation";
 import { useWorkflowsParams } from "../hooks/use-workflows-params";
 import { UseEntitySearch } from "@/hooks/use-entity-search";
-import type { Workflow } from "@/generated/prisma/client";
+import type { WorkflowSummaryDTO } from "../lib/workflow.mapper";
 import { WorkflowIcon } from "lucide-react";
 
 export const WorkflowsSearch = () => {
@@ -114,7 +114,7 @@ export const WorkflowsEmpty = () => {
 
 export const WorkflowItem = ({
     data, 
-}: {data: Workflow}) => {
+}: {data: WorkflowSummaryDTO}) => {
  const removeWorkflow = useRemoveWorkflow();
  const handleRemove = () => {
     removeWorkflow.mutate({ id: data.id });
