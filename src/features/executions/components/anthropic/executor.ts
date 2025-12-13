@@ -5,6 +5,7 @@ import { generateText } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { anthropicChannel } from "@/inngest/channels/anthropic";
 import prisma from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
 
 
 HandleBars.registerHelper("json", (context) => {
@@ -71,7 +72,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicData> = async ({
   }
 
   const anthropic = createAnthropic({
-    apiKey: credential.value,
+    apiKey: decrypt(credential.value),
   });
 
   try {

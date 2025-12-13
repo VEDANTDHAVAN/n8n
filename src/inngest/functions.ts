@@ -25,7 +25,7 @@ export const executeWorkflow = inngest.createFunction(
         },
       });
     }
-   }, // TODO: Remove in production 
+   },
   { 
     event: "workflows/execute.workflow",
     channels: [
