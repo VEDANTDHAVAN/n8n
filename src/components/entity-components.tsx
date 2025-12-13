@@ -15,7 +15,7 @@ import { DropdownMenu, DropdownMenuContent,
 type EntityHeaderProps = {
     title: string;
     description?: string;
-    newButtonLabel: string;
+    newButtonLabel?: string;
     newButtonHref?: string;
     disabled?: boolean;
     isCreating?: boolean;
