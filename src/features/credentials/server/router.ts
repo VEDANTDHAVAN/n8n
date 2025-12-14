@@ -6,7 +6,7 @@ import { CredentialType } from "@/lib/types";
 import { encrypt } from "@/lib/encryption";
 
 export const credentialsRouter = createTRPCRouter({
-  create: premiumProcedure.input(
+  create: protectedProcedure.input(
     z.object({
       name: z.string().min(1, "Name is required"),
       type: z.enum(CredentialType),

@@ -9,7 +9,7 @@ import { sendWorkflowExecution } from "@/inngest/utils";
 import { mapWorkflowToSummaryDTO } from "../lib/workflow.mapper";
 
 export const workflowsRouter = createTRPCRouter({
-  execute: premiumProcedure.input(z.object({ id: z.string() }))
+  execute: protectedProcedure.input(z.object({ id: z.string() }))
    .mutation(async ({ input, ctx }) => {
      const workflow = await prisma.workflow.findUniqueOrThrow({
       where: {
